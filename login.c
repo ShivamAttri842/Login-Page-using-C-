@@ -1,186 +1,170 @@
 #include <stdio.h>
-#include <conio.h>
-#include <windows.h>
 #include <string.h>
-#include <ctype.h> // for isalnum and ispunct
+#include <ctype.h>
+#include <conio.h>
 
-#define ENTER 13
-#define TAB 9
-#define BCKSPC 8
-
-// Define a structure to store user data
+// Define structure to store user data
 struct User {
     char fullName[50];
     char email[50];
     char password[50];
-    char username[50];
-    char phone[12]; // Increased size to accommodate Indian phone numbers
+    char phone[15]; // Increased size to accommodate phone numbers
+    char username[50]; // Added username member
 };
 
 // Function prototypes
-void getUserInput(char field[], char value[], int maxLength);
-void getPassword(char password[], int maxLength);
-int isStrongPassword(const char password[]); // Check if password is strong
-void displayWelcomeMessage();
 void signup();
 void login();
+void clearInputBuffer();
+void printStars(const char str[]);
+void takepassword(char pwd[50]);
 
 int main() {
-    system("color 0b");
-    int opt;
+    int choice;
 
-    displayWelcomeMessage();
+    printf("\n\t\t\t\t----------Welcome to the Authentication System----------\n");
 
-    printf("\n\nYour choice:\t");
-    scanf("%d", &opt);
-    fflush(stdin); // Clear input buffer
+    do {
+        printf("\nPlease choose your operation:");
+        printf("\n1. Signup");
+        printf("\n2. Login");
+        printf("\n3. Exit\n");
+        printf("\nYour choice: ");
+        scanf("%d", &choice);
+        clearInputBuffer(); // Clear input buffer
 
-    switch (opt) {
-        case 1:
-            signup();
-            break;
-        case 2:
-            login();
-            break;
-        case 3:
-            printf("\t\t\tBye Bye :)");
-            break;
-        default:
-            printf("Invalid choice");
-    }
+        switch (choice) {
+            case 1:
+                signup();
+                break;
+            case 2:
+                login();
+                break;
+            case 3:
+                printf("Goodbye!");
+                break;
+            default:
+                printf("Invalid choice! Please enter a number between 1 and 3.\n");
+        }
+
+        if (choice == 1 || choice == 2)
+            break; // Exit the loop after signup or login
+
+    } while (choice != 3);
 
     return 0;
 }
 
-// Function to display welcome message and menu options
-void displayWelcomeMessage() {
-    printf("\n\t\t\t\t----------Welcome to the Authentication System----------");
-    printf("\nPlease choose your operation");
-    printf("\n1. Signup");
-    printf("\n2. Login");
-    printf("\n3. Exit");
-}
-
-// Function to prompt user for input
-void getUserInput(char field[], char value[], int maxLength) {
-    printf("\nEnter your %s:\t", field);
-    fgets(value, maxLength, stdin);
-    value[strcspn(value, "\n")] = 0; // Remove newline character
-}
-
-// Function to take password input without showing characters on screen
-void getPassword(char password[], int maxLength) {
-    int i = 0;
-    char ch;
-    int hasNumeric = 0; // Flag to track if password contains at least one numeric value
-    int hasSymbol = 0; // Flag to track if password contains at least one symbol
-
-    while (1) {
-        ch = getch();
-        if (ch == ENTER || ch == TAB) {
-            password[i] = '\0'; // Terminate string
-            break;
-        } else if (ch == BCKSPC) {
-            if (i > 0) {
-                i--; // Move cursor back
-                printf("\b \b"); // Clear character from screen
-            }
-        } else if (i < maxLength - 1) { // Ensure it doesn't exceed maxLength
-            if (isdigit(ch)) { // Check if character is a digit
-                password[i++] = ch; // Store character in password
-                hasNumeric = 1; // Set numeric flag
-            } else if (ispunct(ch)) { // Check if character is a symbol
-                password[i++] = ch; // Store character in password
-                hasSymbol = 1; // Set symbol flag
-            }
-            printf("*"); // Display '*' on screen (to hide password)
-        }
-    }
-
-    // Check if password meets complexity requirements
-    if (!hasNumeric || !hasSymbol) {
-        printf("\n\nPassword must contain at least one numeric value and at least one symbol.\n");
-        printf("Please try again.\n");
-        getPassword(password, maxLength); // Prompt user for password again
-    }
-}
-
-// Function to check if password is strong
-int isStrongPassword(const char password[]) {
-    int hasNumeric = 0;
-    int hasSymbol = 0;
-
-    for (int i = 0; password[i] != '\0'; i++) {
-        if (isdigit(password[i])) {
-            hasNumeric = 1;
-        } else if (ispunct(password[i])) {
-            hasSymbol = 1;
-        }
-    }
-
-    return hasNumeric && hasSymbol;
-}
-
-// Function for signup operation
 void signup() {
-    system("cls");
-    struct User user;
+    struct User newUser;
 
-    getUserInput("full name", user.fullName, sizeof(user.fullName));
-    getUserInput("email", user.email, sizeof(user.email));
-    getUserInput("phone number", user.phone, sizeof(user.phone));
-    printf("Enter your password (at least 6 characters, including at least one symbol and one numeric value):\t");
-    getPassword(user.password, sizeof(user.password));
+    printf("\nSign Up\n");
+    printf("Enter your full name: ");
+    fgets(newUser.fullName, sizeof(newUser.fullName), stdin);
 
-    // Prompt for username
-    printf("\nEnter your desired username (or leave blank to use email as username):\t");
-    fgets(user.username, sizeof(user.username), stdin);
-    user.username[strcspn(user.username, "\n")] = 0; // Remove newline character
+    // Validate email (contains "@" and ends with ".com")
+    do {
+        printf("Enter your email: ");
+        fgets(newUser.email, sizeof(newUser.email), stdin);
+    } while (!(strstr(newUser.email, "@") && strstr(newUser.email, "gmail.com")));
 
-    if (strlen(user.username) == 0) {
-        // If username is not provided, use email as username
-        strcpy(user.username, user.email);
-    }
-
-    // Write user data to file
-    FILE *fp = fopen("Users.dat", "a+");
-    if (fp != NULL) {
-        fwrite(&user, sizeof(struct User), 1, fp);
-        printf("\n\nUser registration success, Your username is %s", user.username);
-    } else {
-        printf("\n\nSorry! Something went wrong :(\nPlease sign up again");
-    }
-    fclose(fp);
-}
-
-// Function for login operation
-void login() {
-    system("cls");
-    char username[50], password[50];
-    struct User user;
-
-    getUserInput("username", username, sizeof(username));
-    printf("Enter your password:\t");
-    getPassword(password, sizeof(password));
-
-    FILE *fp = fopen("Users.dat", "r");
-    if (fp != NULL) {
-        while (fread(&user, sizeof(struct User), 1, fp)) {
-            if (!strcmp(user.username, username) && !strcmp(user.password, password)) {
-                printf("\n\t\t\t\t\t\tWelcome %s", user.fullName);
-                printf("\n\n|Full Name:\t%s", user.fullName);
-                printf("\n|Email:\t\t%s", user.email);
-                printf("\n|Username:\t%s", user.username);
-                printf("\n|Phone No.:\t%s", user.phone);
+    // Validate phone number (numeric only)
+    int validPhoneNumber = 0;
+    do {
+        printf("Enter your phone number: ");
+        fgets(newUser.phone, sizeof(newUser.phone), stdin);
+        // Check if phone number contains only numeric characters
+        validPhoneNumber = 1;
+        for (int i = 0; i < strlen(newUser.phone) - 1; i++) {
+            if (!isdigit(newUser.phone[i])) {
+                validPhoneNumber = 0;
+                printf("Invalid phone number! Please enter numeric characters only.\n");
                 break;
             }
         }
-        fclose(fp);
-    } else {
-        printf("\n\nError accessing user database. Please try again later.");
-    }
+    } while (!validPhoneNumber);
 
-    if (feof(fp)) {
-        printf("\n\nInvalid username or password.");
+    // Take password securely
+    takepassword(newUser.password);
+
+    // Set username equal to email
+    strcpy(newUser.username, newUser.email);
+
+    printf("\nRegistration successful!\n");
+
+    // Ask user if they want to show the password
+    printf("Do you want to show your password? (1 for Yes, 0 for No): ");
+    int showPassword;
+    scanf("%d", &showPassword);
+    clearInputBuffer(); // Clear input buffer
+
+    if (showPassword) {
+        printf("Your password is: %s\n", newUser.password);
+    }
+}
+
+void login() {
+    char email[50];
+    char password[50];
+
+    printf("\nLogin\n");
+    printf("Enter your email: ");
+    fgets(email, sizeof(email), stdin);
+    printf("Enter your password: ");
+    fgets(password, sizeof(password), stdin);
+
+    printf("\nLogged in successfully!\n");
+}
+
+// Function to clear input buffer
+void clearInputBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+// Function to print characters as stars
+void printStars(const char str[]) {
+    for (int i = 0; i < strlen(str); i++) {
+        printf("*");
+    }
+}
+
+// Function to take password securely without showing characters
+void takepassword(char pwd[50]) {
+    int i = 0;
+    char ch;
+    int hasSymbol = 0;
+    int hasDigit = 0;
+
+    printf("Enter your password (at least one symbol and one numeric value required): ");
+
+    while (1) {
+        ch = getch();
+        if (ch == '\n' || ch == '\r') {
+            if (!hasSymbol || !hasDigit) {
+                printf("\nPassword must contain at least one symbol and one numeric value. Please try again.\n");
+                printf("Enter your password (at least one symbol and one numeric value required): ");
+                i = 0;
+                hasSymbol = 0;
+                hasDigit = 0;
+                continue;
+            }
+            pwd[i] = '\0';
+            break;
+        } else if (ch == '\b') {
+            if (i > 0) {
+                i--;
+                printf("\b \b");
+            }
+        } else {
+            pwd[i++] = ch;
+            printf("*");
+            if (!hasSymbol && ispunct(ch)) {
+                hasSymbol = 1;
+            }
+            if (!hasDigit && isdigit(ch)) {
+                hasDigit = 1;
+            }
+        }
     }
 }
