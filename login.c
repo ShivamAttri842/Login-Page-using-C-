@@ -92,7 +92,15 @@ void signup() {
     // Set username equal to email
     strcpy(newUser.username, newUser.email);
 
-    printf("\nRegistration successful!\n");
+    // Write user data to file
+    FILE *fp = fopen("Users.dat", "a+");
+    if (fp != NULL) {
+        fwrite(&newUser, sizeof(struct User), 1, fp);
+        fclose(fp);
+        printf("\nRegistration successful!\n");
+    } else {
+        printf("\nError: Unable to open file for writing.\n");
+    }
 }
 
 void login() {
@@ -102,8 +110,6 @@ void login() {
     printf("\nLogin\n");
     printf("Enter your email: ");
     fgets(email, sizeof(email), stdin);
-
-    // Take password securely
     printf("Enter your password: ");
     takepassword(password);
 
@@ -156,8 +162,10 @@ void printStars(const char str[]) {
 void getPasswordAndShowOption(char password[]) {
     int i = 0;
     char ch;
+    int hasNumeric = 0; // Flag to track if password contains at least one numeric value
+    int hasSymbol = 0; // Flag to track if password contains at least one symbol
 
-    printf("Enter your password: ");
+    printf("Enter your password (at least one symbol and one numeric value required): ");
     while (1) {
         ch = getch();
         if (ch == '\n' || ch == '\r') {
@@ -171,6 +179,12 @@ void getPasswordAndShowOption(char password[]) {
         } else {
             password[i++] = ch;
             printf("*");
+            if (!hasSymbol && ispunct(ch)) {
+                hasSymbol = 1;
+            }
+            if (!hasNumeric && isdigit(ch)) {
+                hasNumeric = 1;
+            }
         }
     }
 
@@ -182,6 +196,12 @@ void getPasswordAndShowOption(char password[]) {
 
     if (showPassword) {
         printf("Your password is: %s\n", password);
+    }
+
+    // Validate password complexity
+    if (!hasNumeric || !hasSymbol) {
+        printf("Password must contain at least one symbol and one numeric value. Please try again.\n");
+        getPasswordAndShowOption(password);
     }
 }
 
