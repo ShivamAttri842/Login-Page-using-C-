@@ -16,8 +16,9 @@ struct User {
 void signup();
 void login();
 void clearInputBuffer();
-void printStars(const char str[]);
 void takepassword(char pwd[50]);
+void writeUserDataToFile(struct User newUser);
+int authenticateUser(char email[], char password[]);
 
 int main() {
     int choice;
@@ -92,15 +93,8 @@ void signup() {
 
     printf("\nRegistration successful!\n");
 
-    // Ask user if they want to show the password
-    printf("Do you want to show your password? (1 for Yes, 0 for No): ");
-    int showPassword;
-    scanf("%d", &showPassword);
-    clearInputBuffer(); // Clear input buffer
-
-    if (showPassword) {
-        printf("Your password is: %s\n", newUser.password);
-    }
+    // Write user data to file
+    writeUserDataToFile(newUser);
 }
 
 void login() {
@@ -110,23 +104,24 @@ void login() {
     printf("\nLogin\n");
     printf("Enter your email: ");
     fgets(email, sizeof(email), stdin);
-    printf("Enter your password: ");
-    fgets(password, sizeof(password), stdin);
 
-    printf("\nLogged in successfully!\n");
+    // Take password securely
+    printf("Enter your password: ");
+    takepassword(password);
+
+    // Authenticate user
+    int authResult = authenticateUser(email, password);
+    if (authResult == 1) {
+        printf("\nLogged in successfully!\n");
+    } else {
+        printf("\nInvalid email or password.\n");
+    }
 }
 
 // Function to clear input buffer
 void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
-}
-
-// Function to print characters as stars
-void printStars(const char str[]) {
-    for (int i = 0; i < strlen(str); i++) {
-        printf("*");
-    }
 }
 
 // Function to take password securely without showing characters
@@ -136,7 +131,7 @@ void takepassword(char pwd[50]) {
     int hasSymbol = 0;
     int hasDigit = 0;
 
-    printf("Enter your password (at least one symbol and one numeric value required): ");
+    printf("\nEnter your password (at least one symbol and one numeric value required): ");
 
     while (1) {
         ch = getch();
@@ -167,4 +162,35 @@ void takepassword(char pwd[50]) {
             }
         }
     }
+}
+
+// Function to write user data to file
+void writeUserDataToFile(struct User newUser) {
+    FILE *fp = fopen("Users.dat", "a");
+    if (fp != NULL) {
+        fwrite(&newUser, sizeof(struct User), 1, fp);
+        fclose(fp);
+    } else {
+        printf("\nError: Unable to open file for writing.\n");
+    }
+}
+
+// Function to authenticate user
+int authenticateUser(char email[], char password[]) {
+    struct User currentUser;
+
+    FILE *fp = fopen("Users.dat", "r");
+    if (fp != NULL) {
+        while (fread(&currentUser, sizeof(struct User), 1, fp)) {
+            if (strcmp(currentUser.email, email) == 0 && strcmp(currentUser.password, password) == 0) {
+                fclose(fp);
+                return 1; // Authentication successful
+            }
+        }
+        fclose(fp);
+    } else {
+        printf("\nError: Unable to open file for reading.\n");
+    }
+
+    return 0; // Authentication failed
 }
