@@ -17,8 +17,9 @@ void signup();
 void login();
 void clearInputBuffer();
 void takepassword(char pwd[50]);
-void writeUserDataToFile(struct User newUser);
+void printStars(const char str[]); // Function to print stars
 int authenticateUser(char email[], char password[]);
+void getPasswordAndShowOption(char password[]); // Function to get password and show option during signup
 
 int main() {
     int choice;
@@ -67,7 +68,7 @@ void signup() {
     do {
         printf("Enter your email: ");
         fgets(newUser.email, sizeof(newUser.email), stdin);
-    } while (!(strstr(newUser.email, "@") && strstr(newUser.email, "gmail.com")));
+    } while (!(strstr(newUser.email, "@") && strstr(newUser.email, ".com")));
 
     // Validate phone number (numeric only)
     int validPhoneNumber = 0;
@@ -86,15 +87,12 @@ void signup() {
     } while (!validPhoneNumber);
 
     // Take password securely
-    takepassword(newUser.password);
+    getPasswordAndShowOption(newUser.password);
 
     // Set username equal to email
     strcpy(newUser.username, newUser.email);
 
     printf("\nRegistration successful!\n");
-
-    // Write user data to file
-    writeUserDataToFile(newUser);
 }
 
 void login() {
@@ -115,6 +113,7 @@ void login() {
         printf("\nLogged in successfully!\n");
     } else {
         printf("\nInvalid email or password.\n");
+        printf("Invalid password entered: %s\n", password);
     }
 }
 
@@ -128,22 +127,10 @@ void clearInputBuffer() {
 void takepassword(char pwd[50]) {
     int i = 0;
     char ch;
-    int hasSymbol = 0;
-    int hasDigit = 0;
-
-    printf("\nEnter your password (at least one symbol and one numeric value required): ");
 
     while (1) {
         ch = getch();
         if (ch == '\n' || ch == '\r') {
-            if (!hasSymbol || !hasDigit) {
-                printf("\nPassword must contain at least one symbol and one numeric value. Please try again.\n");
-                printf("Enter your password (at least one symbol and one numeric value required): ");
-                i = 0;
-                hasSymbol = 0;
-                hasDigit = 0;
-                continue;
-            }
             pwd[i] = '\0';
             break;
         } else if (ch == '\b') {
@@ -154,24 +141,47 @@ void takepassword(char pwd[50]) {
         } else {
             pwd[i++] = ch;
             printf("*");
-            if (!hasSymbol && ispunct(ch)) {
-                hasSymbol = 1;
-            }
-            if (!hasDigit && isdigit(ch)) {
-                hasDigit = 1;
-            }
         }
     }
 }
 
-// Function to write user data to file
-void writeUserDataToFile(struct User newUser) {
-    FILE *fp = fopen("Users.dat", "a");
-    if (fp != NULL) {
-        fwrite(&newUser, sizeof(struct User), 1, fp);
-        fclose(fp);
-    } else {
-        printf("\nError: Unable to open file for writing.\n");
+// Function to print characters as stars
+void printStars(const char str[]) {
+    for (int i = 0; i < strlen(str); i++) {
+        printf("*");
+    }
+}
+
+// Function to get password and show option during signup
+void getPasswordAndShowOption(char password[]) {
+    int i = 0;
+    char ch;
+
+    printf("Enter your password: ");
+    while (1) {
+        ch = getch();
+        if (ch == '\n' || ch == '\r') {
+            password[i] = '\0';
+            break;
+        } else if (ch == '\b') {
+            if (i > 0) {
+                i--;
+                printf("\b \b");
+            }
+        } else {
+            password[i++] = ch;
+            printf("*");
+        }
+    }
+
+    // Show option to display password
+    printf("\nDo you want to show your password? (1 for Yes, 0 for No): ");
+    int showPassword;
+    scanf("%d", &showPassword);
+    clearInputBuffer(); // Clear input buffer
+
+    if (showPassword) {
+        printf("Your password is: %s\n", password);
     }
 }
 
